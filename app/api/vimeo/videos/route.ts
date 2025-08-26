@@ -53,25 +53,35 @@ export async function GET(req: Request) {
     }
 
     const data = await r.json();
-    const items = (data?.data ?? []).map((v: any) => ({
+    const videos = (data?.data ?? []).map((v: any) => ({
       id: v.uri?.split("/").pop(),
-      name: v.name,
+      title: v.name,
       description: v.description,
       duration: v.duration,
-      link: v.link,                // Vimeo watch page
-      embedHtml: v.embed?.html,    // if you choose to render embeds
-      thumb: v.pictures?.sizes?.[2]?.link ?? v.pictures?.sizes?.[0]?.link,
-      createdAt: v.created_time,
-      updatedAt: v.modified_time,
-      privacyView: v.privacy?.view,
+      urls: {
+        watch: v.link,
+        embed: v.embed?.html
+      },
+      thumbnail: v.pictures?.sizes?.[2]?.link ?? v.pictures?.sizes?.[0]?.link,
+      timestamps: {
+        created: v.created_time,
+        modified: v.modified_time
+      },
+      privacy: v.privacy?.view,
     }));
 
     return NextResponse.json({
-      page: data.page,
-      per_page: data.per_page,
-      total: data.total,
-      paging: data.paging,
-      videos: items,
+      success: true,
+      data: {
+        videos,
+        pagination: {
+          page: data.page,
+          perPage: data.per_page,
+          total: data.total,
+          hasNext: !!data.paging?.next,
+          hasPrevious: !!data.paging?.previous
+        }
+      }
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
