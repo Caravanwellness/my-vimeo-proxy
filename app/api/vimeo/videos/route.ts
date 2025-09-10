@@ -5,9 +5,7 @@ const USER_ID = process.env.VIMEO_USER_ID;        // for Project/Folder
 const PROJECT_ID = process.env.VIMEO_PROJECT_ID;  // for Project/Folder
 const ALBUM_ID = process.env.VIMEO_ALBUM_ID;      // for Album/Showcase
 
-// keep payload small/safe (no file download links etc.)
-const VIMEO_FIELDS =
-  "uri,name,description,duration,created_time,modified_time,link,pictures.sizes.link,embed.html,privacy.view";
+// Return all fields from Vimeo API
 
 function vimeoUrl(searchParams: URLSearchParams) {
   const page = searchParams.get("page") ?? "1";
@@ -22,7 +20,6 @@ function vimeoUrl(searchParams: URLSearchParams) {
   url.searchParams.set("page", page);
   url.searchParams.set("per_page", perPage);
   if (query) url.searchParams.set("query", query);
-  url.searchParams.set("fields", VIMEO_FIELDS);
   return url.toString();
 }
 
@@ -53,35 +50,10 @@ export async function GET(req: Request) {
     }
 
     const data = await r.json();
-    const videos = (data?.data ?? []).map((v: any) => ({
-      id: v.uri?.split("/").pop(),
-      title: v.name,
-      description: v.description,
-      duration: v.duration,
-      urls: {
-        watch: v.link,
-        embed: v.embed?.html
-      },
-      thumbnail: v.pictures?.sizes?.[2]?.link ?? v.pictures?.sizes?.[0]?.link,
-      timestamps: {
-        created: v.created_time,
-        modified: v.modified_time
-      },
-      privacy: v.privacy?.view,
-    }));
-
+    
     return NextResponse.json({
       success: true,
-      data: {
-        videos,
-        pagination: {
-          page: data.page,
-          perPage: data.per_page,
-          total: data.total,
-          hasNext: !!data.paging?.next,
-          hasPrevious: !!data.paging?.previous
-        }
-      }
+      data: data
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
