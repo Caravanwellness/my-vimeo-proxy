@@ -4,6 +4,7 @@ const VIMEO_TOKEN = process.env.VIMEO_TOKEN!;
 const USER_ID = process.env.VIMEO_USER_ID;        // for Project/Folder
 const PROJECT_ID = process.env.VIMEO_PROJECT_ID;  // for Project/Folder
 const ALBUM_ID = process.env.VIMEO_ALBUM_ID;      // for Album/Showcase
+const API_SECRET = process.env.API_SECRET;
 
 // Return all fields from Vimeo API
 
@@ -25,6 +26,14 @@ function vimeoUrl(searchParams: URLSearchParams) {
 
 export async function GET(req: Request) {
   try {
+    // Check API secret
+    const authHeader = req.headers.get('authorization');
+    const providedSecret = authHeader?.replace('Bearer ', '');
+    
+    if (!API_SECRET || !providedSecret || providedSecret !== API_SECRET) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     if (!VIMEO_TOKEN) {
       return NextResponse.json({ error: "Missing VIMEO_TOKEN" }, { status: 500 });
     }
