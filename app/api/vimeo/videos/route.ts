@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     // Check API secret
     const authHeader = req.headers.get('authorization');
     const providedSecret = authHeader?.replace('Bearer ', '');
-    
+
     if (!API_SECRET || !providedSecret || providedSecret !== API_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -59,12 +59,37 @@ export async function GET(req: Request) {
     }
 
     const data = await r.json();
-    
-    return NextResponse.json({
+
+    const response = NextResponse.json({
       success: true,
       data: data
     });
+
+    // Add CORS headers
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+
+    return response;
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    const response = NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+
+    // Add CORS headers to error response too
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+
+    return response;
   }
+}
+
+export async function OPTIONS(req: Request) {
+  const response = new NextResponse(null, { status: 200 });
+
+  // Add CORS headers for OPTIONS request
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+
+  return response;
 }
