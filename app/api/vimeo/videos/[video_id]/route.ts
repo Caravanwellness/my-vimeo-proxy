@@ -2,17 +2,19 @@ import { NextResponse } from "next/server";
 
 const VIMEO_TOKEN = process.env.VIMEO_TOKEN!;
 const API_SECRET = process.env.API_SECRET;
+const SHOWCASE_TOKEN = process.env.SHOWCASE_TOKEN;
 
 export async function GET(
   req: Request,
   { params }: { params: { video_id: string } }
 ) {
   try {
-    // Check API secret
+    // Check API secret or showcase token
     const authHeader = req.headers.get('authorization');
     const providedSecret = authHeader?.replace('Bearer ', '');
 
-    if (!API_SECRET || !providedSecret || providedSecret !== API_SECRET) {
+    const validTokens = [API_SECRET, SHOWCASE_TOKEN].filter(Boolean);
+    if (!providedSecret || !validTokens.some(token => token === providedSecret)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -5,6 +5,7 @@ const USER_ID = process.env.VIMEO_USER_ID;        // for Project/Folder
 const PROJECT_ID = process.env.VIMEO_PROJECT_ID;  // for Project/Folder
 const ALBUM_ID = process.env.VIMEO_ALBUM_ID;      // for Album/Showcase
 const API_SECRET = process.env.API_SECRET;
+const SHOWCASE_TOKEN = process.env.SHOWCASE_TOKEN;
 
 // Return all fields from Vimeo API
 
@@ -26,11 +27,12 @@ function vimeoUrl(searchParams: URLSearchParams) {
 
 export async function GET(req: Request) {
   try {
-    // Check API secret
+    // Check API secret or showcase token
     const authHeader = req.headers.get('authorization');
     const providedSecret = authHeader?.replace('Bearer ', '');
 
-    if (!API_SECRET || !providedSecret || providedSecret !== API_SECRET) {
+    const validTokens = [API_SECRET, SHOWCASE_TOKEN].filter(Boolean);
+    if (!providedSecret || !validTokens.some(token => token === providedSecret)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
