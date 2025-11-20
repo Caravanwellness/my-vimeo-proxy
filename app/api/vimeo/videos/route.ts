@@ -27,7 +27,7 @@ function vimeoUrl(searchParams: URLSearchParams) {
 
 export async function GET(req: Request) {
   try {
-    // Check API secret or showcase token
+    // Check API secret token or showcase token
     const authHeader = req.headers.get('authorization');
     const providedSecret = authHeader?.replace('Bearer ', '');
 
