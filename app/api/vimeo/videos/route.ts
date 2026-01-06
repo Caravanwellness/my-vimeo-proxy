@@ -5,17 +5,38 @@ const USER_ID = process.env.VIMEO_USER_ID;        // for Project/Folder
 const PROJECT_ID = process.env.VIMEO_PROJECT_ID;  // for Project/Folder
 const ALBUM_ID = process.env.VIMEO_ALBUM_ID;      // for Album/Showcase (default)
 const API_SECRET = process.env.API_SECRET;
-const SHOWCASE_TOKEN = process.env.SHOWCASE_TOKEN;
-const SHOWCASE_ALBUM_ID = process.env.SHOWCASE_ALBUM_ID;
-const PRUDENTIAL_SHOWCASE_TOKEN = process.env.PRUDENTIAL_SHOWCASE_TOKEN;
-const PRUDENTIAL_SHOWCASE_ALBUM_ID = process.env.PRUDENTIAL_SHOWCASE_ALBUM_ID;
+
+// Dynamically load all showcase tokens from environment variables
+// Supports pattern: SHOWCASE_{IDENTIFIER}_TOKEN and SHOWCASE_{IDENTIFIER}_ALBUM_ID
+// Example: SHOWCASE_1_TOKEN, SHOWCASE_PRUDENTIAL_TOKEN, etc.
+function loadShowcaseTokens(): Record<string, string | undefined> {
+  const tokenMap: Record<string, string | undefined> = {};
+
+  // Add the default API_SECRET mapping (backward compatibility)
+  if (API_SECRET) {
+    tokenMap[API_SECRET] = ALBUM_ID;
+  }
+
+  // Scan environment variables for SHOWCASE_*_TOKEN pattern
+  Object.keys(process.env).forEach((key) => {
+    const match = key.match(/^SHOWCASE_([A-Z0-9_]+)_TOKEN$/);
+    if (match) {
+      const identifier = match[1];
+      const token = process.env[key];
+      const albumIdKey = `SHOWCASE_${identifier}_ALBUM_ID`;
+      const albumId = process.env[albumIdKey];
+
+      if (token && albumId) {
+        tokenMap[token] = albumId;
+      }
+    }
+  });
+
+  return tokenMap;
+}
 
 // Map tokens to their respective album IDs
-const TOKEN_TO_ALBUM: Record<string, string | undefined> = {
-  [API_SECRET || '']: ALBUM_ID,
-  [SHOWCASE_TOKEN || '']: SHOWCASE_ALBUM_ID,
-  [PRUDENTIAL_SHOWCASE_TOKEN || '']: PRUDENTIAL_SHOWCASE_ALBUM_ID,
-};
+const TOKEN_TO_ALBUM = loadShowcaseTokens();
 
 // Return all fields from Vimeo API
 
@@ -41,8 +62,8 @@ export async function GET(req: Request) {
     const authHeader = req.headers.get('authorization');
     const providedSecret = authHeader?.replace('Bearer ', '');
 
-    const validTokens = [API_SECRET, SHOWCASE_TOKEN, PRUDENTIAL_SHOWCASE_TOKEN].filter(Boolean);
-    if (!providedSecret || !validTokens.some(token => token === providedSecret)) {
+    const validTokens = Object.keys(TOKEN_TO_ALBUM).filter(token => token !== '');
+    if (!providedSecret || !validTokens.includes(providedSecret)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
