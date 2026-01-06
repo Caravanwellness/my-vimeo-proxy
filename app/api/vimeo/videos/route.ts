@@ -19,11 +19,11 @@ function loadShowcaseTokens(): Record<string, string | undefined> {
 
   // Scan environment variables for SHOWCASE_*_TOKEN pattern
   Object.keys(process.env).forEach((key) => {
-    const match = key.match(/^SHOWCASE_([A-Z0-9_]+)_TOKEN$/);
+    const match = key.match(/^SHOWCASE_TOKEN_([A-Z0-9_]+)$/);
     if (match) {
       const identifier = match[1];
       const token = process.env[key];
-      const albumIdKey = `SHOWCASE_${identifier}_ALBUM_ID`;
+      const albumIdKey = `SHOWCASE_ALBUM_ID_${identifier}`;
       const albumId = process.env[albumIdKey];
 
       if (token && albumId) {
